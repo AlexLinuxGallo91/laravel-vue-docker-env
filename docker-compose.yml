@@ -1,0 +1,59 @@
+version: "3.9"
+services:
+
+  php-fpm:
+    image: php-fpm-vue
+    build: 
+      context: ./docker-config/docker-php-fpm
+      dockerfile: Dockerfile
+    container_name: php-fpm
+    restart: unless-stopped
+    volumes:
+      - .:/var/www
+    networks:
+      - laravel-itoc-plus-development
+    
+  db:
+    image: mysql:8.0.30
+    container_name: db-mysql-laravel
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_USER: ${MYSQL_USER}
+    volumes:
+      - ${MYSQL_DATA_PATH}:/var/lib/mysql
+    networks:
+      - laravel-itoc-plus-development
+    
+  nginx:
+    image: nginx:alpine
+    container_name: nginx-laravel
+    restart: unless-stopped
+    ports:
+      - 8000:80
+    volumes:
+      - .:/var/www
+      - ./docker-config/nginx:/etc/nginx/conf.d/
+    networks:
+      - laravel-itoc-plus-development
+
+  rabbitmq:
+    image: rabbitmq-laravel
+    build: 
+      context: ./docker-config/rabbitmq
+      dockerfile: Dockerfile
+    container_name: rabbitmq
+    restart: unless-stopped
+    ports:
+      - 5672:5672
+      - 15672:15672
+    networks:
+      - laravel-itoc-plus-development
+
+networks:
+  laravel-itoc-plus-development:
+    driver: bridge
